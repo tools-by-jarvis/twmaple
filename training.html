@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>楓之谷經典版練等地圖推薦｜1-100等練功點查詢 twmaple</title>
+<meta name="description" content="楓之谷經典版練功地圖推薦：輸入目前等級，依官方怪物 HP/EXP 與地圖生怪點數量，自動推薦 3-5 個適合的練功點，附主要怪物數值與特色說明。">
+<link rel="canonical" href="https://twmaple.com/training.html">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="site"><div class="wrap">
+  <div class="logo"><a href="index.html" style="color:var(--accent)">🍁 twmaple</a> <span>練等地圖推薦</span></div>
+  <nav class="top"><a href="exp.html">練等效率</a><a href="scroll.html">卷軸計算</a><a href="drop.html">掉落查詢</a></nav>
+</div></header>
+<main><div class="wrap">
+  <h1>🗺️ 練等地圖推薦</h1>
+  <p class="sub">輸入目前等級，依官方怪物數值（HP、EXP）與地圖生怪點數量，推薦最有效率的練功點。</p>
+
+  <div class="panel">
+    <label>目前等級（1–100）</label>
+    <input id="lv" type="number" value="30" min="1" max="100">
+    <div class="presets">
+      <button onclick="setLv(10)">Lv10</button>
+      <button onclick="setLv(20)">Lv20</button>
+      <button onclick="setLv(30)">Lv30</button>
+      <button onclick="setLv(45)">Lv45</button>
+      <button onclick="setLv(60)">Lv60</button>
+      <button onclick="setLv(75)">Lv75</button>
+    </div>
+    <button class="go" onclick="calc()">推薦練功點</button>
+  </div>
+
+  <div class="result" id="res"></div>
+
+  <p class="note">推薦基於官方怪物數值與社群攻略整理，實際依個人職業與裝備調整。怪物 HP/EXP 與出沒地圖取自波波攻略島（bobogameguides.com）整理的官方圖鑑資料；地圖僅列目前經典版已開放且確認出沒的區域。同等級段若偏好任務或組隊玩法，效率可能與純打怪推薦不同。</p>
+</div></main>
+<footer><div class="wrap"><p>twmaple.com — 非官方粉絲工具站，與 NEXON、遊戲橘子無任何關聯。遊戲內數值以台服實測為準。</p></div></footer>
+<script>
+let MOBS=null;
+fetch('data/training_mobs.json').then(r=>r.json()).then(d=>{MOBS=d;});
+function setLv(v){document.getElementById('lv').value=v;calc();}
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function tag(mob,map,diff,eff){
+  const t=[];
+  if(map.c>=35)t.push('怪超密集刷新快');
+  else if(map.c>=18)t.push('怪點多場地穩');
+  if(eff>=0.09)t.push('單隻經驗效率高');
+  if(diff<=-3)t.push('打起來輕鬆省藥');
+  else if(diff>=3)t.push('稍硬但經驗甜');
+  if(!t.length)t.push('等級對口穩定練');
+  return t.slice(0,2).join('，');
+}
+function calc(){
+  const box=document.getElementById('res');
+  if(!MOBS){box.className='result show';box.innerHTML='資料載入中，請再按一次';return;}
+  const L=Math.max(1,Math.min(100,parseInt(document.getElementById('lv').value)||1));
+  const cands=[];
+  for(const m of MOBS){
+    if(m.boss||!m.exp||!m.hp||!m.maps.length)continue;
+    const diff=m.lv-L;
+    if(diff<-9||diff>6)continue;
+    const eff=m.exp/m.hp;
+    const w=Math.exp(-Math.pow(diff+1,2)/22);
+    for(const mp of m.maps.slice(0,3)){
+      let score=eff*w*(1+Math.log(1+mp.c)/3);
+      if(mp.c<6)score*=mp.c/6;
+      cands.push({m,mp,diff,eff,score});
+    }
+  }
+  cands.sort((a,b)=>b.score-a.score);
+  const seen=new Set(),mobCnt={},picks=[];
+  for(const c of cands){
+    if(seen.has(c.mp.m))continue;
+    if((mobCnt[c.m.n]||0)>=2)continue;
+    seen.add(c.mp.m);mobCnt[c.m.n]=(mobCnt[c.m.n]||0)+1;picks.push(c);
+    if(picks.length>=5)break;
+  }
+  box.className='result show';
+  if(!picks.length){box.innerHTML='<p>這個等級目前資料庫沒有已開放地圖的合適怪，建議改用任務練或到 <a href="exp.html">練等效率計算機</a> 手動評估。</p>';return;}
+  let h='<div class="big">Lv '+L+' 推薦練功點</div>';
+  h+='<table><tr><th>地圖</th><th>主要怪</th><th>怪等</th><th>HP</th><th>EXP</th><th>適合等級</th></tr>';
+  const notes=[];
+  picks.forEach((c,i)=>{
+    const lo=Math.max(1,c.m.lv-5),hi=c.m.lv+7;
+    h+='<tr><td>'+esc(c.mp.m)+'<br><span style="color:var(--muted);font-size:.8rem">'+esc(c.mp.r)+'・生怪點 '+c.mp.c+' 個</span></td><td>'+esc(c.m.n)+'</td><td>'+c.m.lv+'</td><td>'+c.m.hp.toLocaleString()+'</td><td>'+c.m.exp.toLocaleString()+'</td><td>Lv '+lo+'–'+hi+'</td></tr>';
+    notes.push('<b>'+(i+1)+'. '+esc(c.mp.m)+'</b>：'+tag(c.m,c.mp,c.diff,c.eff));
+  });
+  h+='</table><p style="margin-top:12px;font-size:.9rem;color:#b6bfd1">'+notes.join('<br>')+'</p>';
+  box.innerHTML=h;
+}
+</script>
+</body>
+</html>
