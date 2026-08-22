@@ -3,10 +3,32 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>楓之谷經典版 怪物掉落查詢（建置中）｜twmaple</title>
-<meta name="description" content="楓之谷經典版怪物掉落查詢工具建置中，掉落資料整理與社群驗證進行中。先用卷軸期望值與練等效率計算機。">
+<title>楓之谷經典版 怪物掉落查詢｜twmaple</title>
+<meta name="description" content="楓之谷經典版怪物掉落查詢：輸入怪物名查掉落物，或輸入物品名查哪些怪會掉。收錄近 900 隻怪物、3000+ 掉落物品，繁體中文，手機可用。">
 <link rel="canonical" href="https://twmaple.com/drop.html">
 <link rel="stylesheet" href="style.css">
+<style>
+.searchbar{position:sticky;top:0;z-index:5;background:var(--bg);padding:10px 0 6px}
+.searchbar input{font-size:1.05rem;padding:12px 14px}
+.tabs{display:flex;gap:8px;margin-top:10px}
+.tabs button{flex:1;background:var(--bg2);border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:9px 0;font-size:.95rem;cursor:pointer}
+.tabs button.on{background:var(--accent);color:#1a1408;font-weight:700;border-color:var(--accent)}
+.hits{margin-top:14px}
+.mobcard{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:12px}
+.mobcard h3{color:var(--accent);font-size:1.05rem;display:flex;align-items:center;flex-wrap:wrap;gap:6px}
+.lv{font-size:.78rem;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:1px 8px;color:var(--accent2);font-weight:600}
+.boss{font-size:.78rem;background:#3a2020;border:1px solid #6b3030;border-radius:6px;padding:1px 8px;color:var(--bad);font-weight:600}
+.dl{margin-top:8px;display:flex;flex-wrap:wrap;gap:6px}
+.it{font-size:.85rem;border:1px solid var(--border);border-radius:14px;padding:3px 10px;background:var(--bg);cursor:pointer}
+.it:hover{border-color:var(--accent2)}
+.it.equip{color:#ffd27e}.it.scroll{color:#c9a7ff}.it.use{color:#8fdc9f}.it.etc{color:#9aa3b5}.it.other{color:#7ec8ff}
+.it.hl{border-color:var(--accent);color:var(--accent);font-weight:700}
+.legend{display:flex;flex-wrap:wrap;gap:10px;font-size:.8rem;color:var(--muted);margin-top:10px}
+.legend span::before{content:"●";margin-right:4px}
+.lg-equip::before{color:#ffd27e}.lg-scroll::before{color:#c9a7ff}.lg-use::before{color:#8fdc9f}.lg-etc::before{color:#9aa3b5}
+.count{color:var(--muted);font-size:.88rem;margin-top:10px}
+.more{width:100%;background:var(--bg2);border:1px solid var(--border);color:var(--accent2);border-radius:8px;padding:10px;font-size:.95rem;cursor:pointer;margin-top:4px}
+</style>
 </head>
 <body>
 <header class="site"><div class="wrap">
@@ -15,13 +37,83 @@
 </div></header>
 <main><div class="wrap">
   <h1>🎁 怪物掉落查詢</h1>
-  <div class="panel" style="text-align:center;padding:48px 18px">
-    <div style="font-size:3rem">🚧</div>
-    <h2 style="margin-top:10px">建置中</h2>
-    <p style="color:var(--muted);margin-top:8px">掉落資料正在整理與驗證中，只收錄可信來源、標注驗證狀態。<br>上線前，先用 <a href="scroll.html">卷軸期望值計算機</a> 和 <a href="exp.html">練等效率計算機</a>。</p>
-    <p style="margin-top:16px">📣 追蹤 Threads 看每日攻略：<a href="https://www.threads.com/@toolsbyjarvis" target="_blank" rel="noopener">@toolsbyjarvis</a></p>
+  <p class="sub">查怪物會掉什麼，或反查物品是哪些怪掉的。收錄近 900 隻怪物、3000+ 件掉落物品。</p>
+
+  <div class="searchbar">
+    <input id="q" type="search" placeholder="輸入怪物或物品名，例如：菇菇寶貝、綠水靈、攻擊卷軸…" autocomplete="off">
+    <div class="tabs">
+      <button id="tabMob" class="on">🐌 查怪物 → 掉落物</button>
+      <button id="tabItem">📦 查物品 → 哪些怪掉</button>
+    </div>
   </div>
+
+  <div id="count" class="count"></div>
+  <div id="hits" class="hits"></div>
+  <button id="more" class="more" style="display:none">顯示更多</button>
+
+  <div class="legend">
+    <span class="lg-equip">裝備</span><span class="lg-scroll">卷軸</span><span class="lg-use">消耗</span><span class="lg-etc">其他/雜物</span>
+  </div>
+  <p class="note">資料基於海外舊版（pre-Big Bang）公開資料整理，物品與怪物名稱採台服繁體譯名；台服經典版實際掉落以實測為準，歡迎透過 <a href="https://www.threads.com/@toolsbyjarvis" target="_blank" rel="noopener">Threads @toolsbyjarvis</a> 回報修正。不顯示機率欄位，僅列「會掉什麼」。</p>
 </div></main>
 <footer><div class="wrap"><p>twmaple.com — 非官方粉絲工具站，與 NEXON、遊戲橘子無任何關聯。</p></div></footer>
+<script>
+let DATA=null, mode='mob', shown=0, curList=[];
+const $=id=>document.getElementById(id);
+const hitsEl=$('hits'), countEl=$('count'), moreBtn=$('more'), qEl=$('q');
+const CATN={equip:'裝備',scroll:'卷軸',use:'消耗',etc:'其他',other:'其他'};
+fetch('data/drops.json').then(r=>r.json()).then(d=>{
+  DATA=d;
+  // 反向索引：itemid -> [mob indexes]
+  DATA.byItem={};
+  d.mobs.forEach((m,idx)=>m.d.forEach(i=>{(DATA.byItem[i]=DATA.byItem[i]||[]).push(idx)}));
+  render();
+});
+function esc(s){return s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+function mobCard(m, hlItem){
+  const tags=m.d.map(i=>{
+    const it=DATA.items[i]; if(!it) return '';
+    const hl=(hlItem&&i==hlItem)?' hl':'';
+    return `<span class="it ${it.c}${hl}" data-i="${i}" title="${CATN[it.c]}">${esc(it.n)}</span>`;
+  }).join('');
+  return `<div class="mobcard"><h3>${esc(m.n)} <span class="lv">Lv.${m.lv}</span>${m.b?'<span class="boss">BOSS</span>':''}</h3><div class="dl">${tags}</div></div>`;
+}
+function render(){
+  if(!DATA) return;
+  const q=qEl.value.trim().toLowerCase();
+  hitsEl.innerHTML=''; shown=0;
+  if(mode==='mob'){
+    curList = q ? DATA.mobs.filter(m=>m.n.toLowerCase().includes(q)) : DATA.mobs;
+    countEl.textContent = q ? `找到 ${curList.length} 隻怪物` : `共 ${DATA.mobs.length} 隻怪物（依等級排序，輸入名稱篩選）`;
+    showMore();
+  }else{
+    if(!q){ countEl.textContent='輸入物品名稱，例如：攻擊卷軸、青銅、楓葉'; moreBtn.style.display='none'; return; }
+    const ids=Object.keys(DATA.items).filter(i=>DATA.items[i].n.toLowerCase().includes(q));
+    countEl.textContent=`找到 ${ids.length} 件物品`;
+    let html='';
+    ids.slice(0,30).forEach(i=>{
+      const it=DATA.items[i], mobs=(DATA.byItem[i]||[]).map(x=>DATA.mobs[x]);
+      html+=`<div class="mobcard"><h3><span class="it ${it.c} hl">${esc(it.n)}</span> <span class="lv">${CATN[it.c]}</span></h3><div class="dl">${mobs.sort((a,b)=>a.lv-b.lv).map(m=>`<span class="it" data-m="${m.id}">${esc(m.n)} <small style="color:var(--muted)">Lv.${m.lv}</small></span>`).join('')||'<span style="color:var(--muted);font-size:.85rem">無怪物掉落記錄</span>'}</div></div>`;
+    });
+    if(ids.length>30) html+=`<p class="count">僅顯示前 30 件，請輸入更完整名稱。</p>`;
+    hitsEl.innerHTML=html; moreBtn.style.display='none';
+  }
+}
+function showMore(){
+  const next=curList.slice(shown,shown+25);
+  hitsEl.insertAdjacentHTML('beforeend', next.map(m=>mobCard(m)).join(''));
+  shown+=next.length;
+  moreBtn.style.display = shown<curList.length ? 'block' : 'none';
+}
+moreBtn.onclick=showMore;
+qEl.addEventListener('input',()=>render());
+$('tabMob').onclick=()=>{mode='mob';$('tabMob').classList.add('on');$('tabItem').classList.remove('on');render();};
+$('tabItem').onclick=()=>{mode='item';$('tabItem').classList.add('on');$('tabMob').classList.remove('on');render();};
+hitsEl.addEventListener('click',e=>{
+  const t=e.target.closest('.it'); if(!t) return;
+  if(t.dataset.i){ mode='item'; $('tabItem').click(); qEl.value=DATA.items[t.dataset.i].n; render(); window.scrollTo({top:0}); }
+  else if(t.dataset.m){ mode='mob'; $('tabMob').click(); const m=DATA.mobs.find(x=>x.id==t.dataset.m); if(m){qEl.value=m.n; render(); window.scrollTo({top:0});} }
+});
+</script>
 </body>
 </html>
