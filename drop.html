@@ -23,6 +23,10 @@
 .it:hover{border-color:var(--accent2)}
 .it.equip{color:#ffd27e}.it.scroll{color:#c9a7ff}.it.use{color:#8fdc9f}.it.etc{color:#9aa3b5}.it.other{color:#7ec8ff}
 .it.hl{border-color:var(--accent);color:var(--accent);font-weight:700}
+.it.r0::before,.it.r1::before,.it.r2::before,.it.r3::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:5px;vertical-align:1px}
+.it.r0::before{background:#57c76b}.it.r1::before{background:#4f9bff}.it.r2::before{background:#b06dff}.it.r3::before{background:#ff9c3c}
+.legend .lr::before{content:"●";margin-right:4px}
+.lr0::before{color:#57c76b}.lr1::before{color:#4f9bff}.lr2::before{color:#b06dff}.lr3::before{color:#ff9c3c}
 .legend{display:flex;flex-wrap:wrap;gap:10px;font-size:.8rem;color:var(--muted);margin-top:10px}
 .legend span::before{content:"●";margin-right:4px}
 .lg-equip::before{color:#ffd27e}.lg-scroll::before{color:#c9a7ff}.lg-use::before{color:#8fdc9f}.lg-etc::before{color:#9aa3b5}
@@ -54,7 +58,10 @@
   <div class="legend">
     <span class="lg-equip">裝備</span><span class="lg-scroll">卷軸</span><span class="lg-use">消耗</span><span class="lg-etc">其他/雜物</span>
   </div>
-  <p class="note">資料基於海外舊版（pre-Big Bang）公開資料整理，物品與怪物名稱採台服繁體譯名；台服經典版實際掉落以實測為準，歡迎透過 <a href="https://www.threads.com/@toolsbyjarvis" target="_blank" rel="noopener">Threads @toolsbyjarvis</a> 回報修正。不顯示機率欄位，僅列「會掉什麼」。</p>
+  <div class="legend" style="margin-top:6px">
+    稀有度：<span class="lr lr0">常見</span><span class="lr lr1">普通</span><span class="lr lr2">稀有</span><span class="lr lr3">超稀有</span>
+  </div>
+  <p class="note">資料基於海外舊版（pre-Big Bang）公開資料整理，物品與怪物名稱採台服繁體譯名；台服經典版實際掉落以實測為準，歡迎透過 <a href="https://www.threads.com/@toolsbyjarvis" target="_blank" rel="noopener">Threads @toolsbyjarvis</a> 回報修正。稀有度為參考分級（基於海外舊版資料），台服實際機率以官方與實測為準；不顯示精確機率數值。</p>
 </div></main>
 <footer><div class="wrap"><p>twmaple.com — 非官方粉絲工具站，與 NEXON、遊戲橘子無任何關聯。</p></div></footer>
 <script>
@@ -62,19 +69,21 @@ let DATA=null, mode='mob', shown=0, curList=[];
 const $=id=>document.getElementById(id);
 const hitsEl=$('hits'), countEl=$('count'), moreBtn=$('more'), qEl=$('q');
 const CATN={equip:'裝備',scroll:'卷軸',use:'消耗',etc:'其他',other:'其他'};
+const RN=['常見','普通','稀有','超稀有'];
 fetch('data/drops.json').then(r=>r.json()).then(d=>{
   DATA=d;
   // 反向索引：itemid -> [mob indexes]
   DATA.byItem={};
-  d.mobs.forEach((m,idx)=>m.d.forEach(i=>{(DATA.byItem[i]=DATA.byItem[i]||[]).push(idx)}));
+  d.mobs.forEach((m,idx)=>m.d.forEach(p=>{(DATA.byItem[p[0]]=DATA.byItem[p[0]]||[]).push([idx,p[1]])}));
   render();
 });
 function esc(s){return s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
 function mobCard(m, hlItem){
-  const tags=m.d.map(i=>{
+  const tags=m.d.map(p=>{
+    const i=p[0], r=p[1];
     const it=DATA.items[i]; if(!it) return '';
     const hl=(hlItem&&i==hlItem)?' hl':'';
-    return `<span class="it ${it.c}${hl}" data-i="${i}" title="${CATN[it.c]}">${esc(it.n)}</span>`;
+    return `<span class="it ${it.c} r${r}${hl}" data-i="${i}" title="${CATN[it.c]}・${RN[r]}">${esc(it.n)}</span>`;
   }).join('');
   return `<div class="mobcard"><h3>${esc(m.n)} <span class="lv">Lv.${m.lv}</span>${m.b?'<span class="boss">BOSS</span>':''}</h3><div class="dl">${tags}</div></div>`;
 }
@@ -92,8 +101,8 @@ function render(){
     countEl.textContent=`找到 ${ids.length} 件物品`;
     let html='';
     ids.slice(0,30).forEach(i=>{
-      const it=DATA.items[i], mobs=(DATA.byItem[i]||[]).map(x=>DATA.mobs[x]);
-      html+=`<div class="mobcard"><h3><span class="it ${it.c} hl">${esc(it.n)}</span> <span class="lv">${CATN[it.c]}</span></h3><div class="dl">${mobs.sort((a,b)=>a.lv-b.lv).map(m=>`<span class="it" data-m="${m.id}">${esc(m.n)} <small style="color:var(--muted)">Lv.${m.lv}</small></span>`).join('')||'<span style="color:var(--muted);font-size:.85rem">無怪物掉落記錄</span>'}</div></div>`;
+      const it=DATA.items[i], mobs=(DATA.byItem[i]||[]).map(x=>({m:DATA.mobs[x[0]],r:x[1]}));
+      html+=`<div class="mobcard"><h3><span class="it ${it.c} hl">${esc(it.n)}</span> <span class="lv">${CATN[it.c]}</span></h3><div class="dl">${mobs.sort((a,b)=>a.m.lv-b.m.lv).map(o=>`<span class="it r${o.r}" data-m="${o.m.id}" title="${RN[o.r]}">${esc(o.m.n)} <small style="color:var(--muted)">Lv.${o.m.lv}</small></span>`).join('')||'<span style="color:var(--muted);font-size:.85rem">無怪物掉落記錄</span>'}</div></div>`;
     });
     if(ids.length>30) html+=`<p class="count">僅顯示前 30 件，請輸入更完整名稱。</p>`;
     hitsEl.innerHTML=html; moreBtn.style.display='none';
