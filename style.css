@@ -40,6 +40,8 @@ button.go:hover{filter:brightness(1.1)}
 .result.show{display:block}
 .result .big{font-size:1.5rem;font-weight:800;color:var(--accent)}
 .result table{width:100%;border-collapse:collapse;margin-top:12px;font-size:.9rem}
+.result td,.result th{white-space:nowrap}
+.result{overflow-x:auto}
 .result th,.result td{padding:6px 8px;border-bottom:1px solid var(--border);text-align:right}
 .result th:first-child,.result td:first-child{text-align:left}
 .result th{color:var(--muted);font-weight:600}
