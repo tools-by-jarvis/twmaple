@@ -57,8 +57,8 @@ function fmt(x){return Math.round(x).toLocaleString('zh-TW');}
 function fmtTime(min){
   if(!isFinite(min))return '—';
   const h=Math.floor(min/60),m=Math.round(min%60);
-  if(h>=24){const d=Math.floor(h/24);return `${d} 天 ${h%24} 小時 ${m} 分`;}
-  if(h>0)return `${h} 小時 ${m} 分`;
+  if(h>=24){const d=Math.floor(h/24);return `${d}天${h%24}時`;}
+  if(h>0)return `${h}時${m}分`;
   return `${m} 分鐘`;
 }
 function calc(){
