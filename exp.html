@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>楓之谷經典版 練等效率計算機｜升級要多久？經驗時薪試算 twmaple</title>
+<meta name="description" content="楓之谷經典版練等效率計算機：輸入目前等級與經驗%、單隻怪經驗、每分鐘擊殺數，計算升級所需時間與每小時經驗。內建經典（pre-Big Bang）經驗表。">
+<link rel="canonical" href="https://twmaple.com/exp.html">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="site"><div class="wrap">
+  <div class="logo"><a href="index.html" style="color:var(--accent)">🍁 twmaple</a> <span>練等效率計算機</span></div>
+  <nav class="top"><a href="scroll.html">卷軸計算</a><a href="drop.html">掉落查詢</a></nav>
+</div></header>
+<main><div class="wrap">
+  <h1>⚔️ 練等效率計算機</h1>
+  <p class="sub">算算看在這張圖蹲多久才升級。擊殺數抓不準的話，實際打 5 分鐘數一下再除以 5。</p>
+
+  <div class="panel">
+    <div class="grid2">
+      <div><label>目前等級（1–179）</label><input id="lv" type="number" value="45" min="1" max="179"></div>
+      <div><label>目前經驗（%）</label><input id="pct" type="number" value="0" min="0" max="99.99" step="0.01"></div>
+      <div><label>單隻怪經驗（含經驗加成後）</label><input id="mexp" type="number" value="150" min="1"></div>
+      <div><label>每分鐘擊殺數</label><input id="kpm" type="number" value="30" min="0.1" step="0.1"></div>
+    </div>
+    <button class="go" onclick="calc()">計算</button>
+  </div>
+
+  <div class="result" id="res"></div>
+
+  <p class="note">經驗表來源：楓之谷 pre-Big Bang 經典經驗表（公開社群資料整理，涵蓋 Lv1–179）。台服經典版數值若有調整，以遊戲內實測為準；120 級以上數值待實測驗證。本計算不含組隊經驗分配與活動加成，請自行把加成算進「單隻怪經驗」。</p>
+</div></main>
+<footer><div class="wrap"><p>twmaple.com — 非官方粉絲工具站，與 NEXON、遊戲橘子無任何關聯。</p></div></footer>
+<script>
+// pre-Big Bang EXP to next level, index = level (1-based). EXP[L] = 由 L 升到 L+1 所需經驗
+const EXP=[0,
+15,34,57,92,135,372,560,840,1242,1716,
+2360,3216,4200,5460,7050,8840,11040,13716,16680,20216,
+24402,28980,34320,40512,47216,54900,63666,73080,83720,95700,
+108480,122760,138666,155540,174216,194832,216600,240500,266682,294216,
+324240,356916,391160,428280,468450,510420,555680,604416,655200,709716,
+748608,789631,832902,878545,926689,977471,1031036,1087536,1147132,1209994,
+1276301,1346242,1420016,1497832,1579913,1666492,1757815,1854143,1955750,2062925,
+2175973,2295216,2420993,2553663,2693603,2841212,2996910,3161140,3334370,3517093,
+3709829,3913127,4127566,4353756,4592341,4844001,5109452,5389449,5684790,5996316,
+6324914,6671519,7037118,7422752,7829518,8258575,8711144,9188514,9692044,10223168,
+10783397,11374327,11997640,12655110,13348610,14080113,14851703,15665576,16524049,17429566,
+18384706,19392187,20454878,21575805,22758159,24005306,25320796,26708375,28171993,29715818,
+31344244,33061908,34873700,36784778,38800583,40926854,43169645,45535341,48030677,50662758,
+53439077,56367538,59456479,62714694,66151459,69776558,73600313,77633610,81887931,86375389,
+91108760,96101520,101367883,106922842,112782213,118962678,125481832,132358236,139611467,147262175,
+155332142,163844343,172823012,182293713,192283408,202820538,213935103,225658746,238024845,251068606,
+264827165,279339693,294647508,310794191,327825712,345790561,364739883,384726628,405806717,428039218,
+451485556,476210424,502281062,529767758,558746646,589287555,621495043,655449040,691234971,728944227];
+function fmt(x){return Math.round(x).toLocaleString('zh-TW');}
+function fmtTime(min){
+  if(!isFinite(min))return '—';
+  const h=Math.floor(min/60),m=Math.round(min%60);
+  if(h>=24){const d=Math.floor(h/24);return `${d} 天 ${h%24} 小時 ${m} 分`;}
+  if(h>0)return `${h} 小時 ${m} 分`;
+  return `${m} 分鐘`;
+}
+function calc(){
+  const lv=+document.getElementById('lv').value;
+  const pct=+document.getElementById('pct').value;
+  const me=+document.getElementById('mexp').value;
+  const kpm=+document.getElementById('kpm').value;
+  const el=document.getElementById('res');
+  if(lv<1||lv>179||!EXP[lv]){el.className='result show';el.innerHTML='<span class="bad">等級請輸入 1–179。</span>';return;}
+  const need=EXP[lv]*(1-pct/100);
+  const expPerMin=me*kpm;
+  const mins=need/expPerMin;
+  const kills=Math.ceil(need/me);
+  // 之後 5 級預估（從下一級起每級 0% 開始）
+  let rows='';let cum=mins;
+  for(let i=1;i<=5;i++){const L=lv+i;if(!EXP[L])break;const m2=EXP[L]/expPerMin;cum+=m2;
+    rows+=`<tr><td>Lv.${L} → ${L+1}</td><td>${fmt(EXP[L])}</td><td>${fmtTime(m2)}</td><td>${fmtTime(cum)}</td></tr>`;}
+  el.className='result show';
+  el.innerHTML=`
+    <div>升到 Lv.${lv+1} 還需：<span class="big">${fmtTime(mins)}</span></div>
+    <table>
+      <tr><th>指標</th><th>數值</th></tr>
+      <tr><td>本級剩餘經驗</td><td>${fmt(need)}</td></tr>
+      <tr><td>還要打幾隻</td><td>${fmt(kills)} 隻</td></tr>
+      <tr><td>經驗時薪</td><td>${fmt(expPerMin*60)} / 小時</td></tr>
+    </table>
+    ${rows?`<table><tr><th>之後幾級（同效率）</th><th>所需經驗</th><th>該級耗時</th><th>累計</th></tr>${rows}</table>`:''}`;
+}
+</script>
+</body>
+</html>

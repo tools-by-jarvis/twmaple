@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>楓之谷經典版 卷軸期望值計算機｜10% 60% 卷該衝嗎？twmaple</title>
+<meta name="description" content="楓之谷經典版卷軸期望值計算機：輸入卷軸成功率、卷軸單價、白手裝備價與目標成功次數，計算期望總花費與成功機率分佈，衝卷前先算再買。">
+<link rel="canonical" href="https://twmaple.com/scroll.html">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="site"><div class="wrap">
+  <div class="logo"><a href="index.html" style="color:var(--accent)">🍁 twmaple</a> <span>卷軸期望值計算機</span></div>
+  <nav class="top"><a href="exp.html">練等效率</a><a href="drop.html">掉落查詢</a></nav>
+</div></header>
+<main><div class="wrap">
+  <h1>📜 卷軸期望值計算機</h1>
+  <p class="sub">假設每次衝卷獨立、失敗不損毀裝備（經典版一般卷）。輸入數字，算出「平均要花多少錢」與「衝出目標的機率」。</p>
+
+  <div class="panel">
+    <div class="presets">
+      <button onclick="preset(10,1)">10% 卷衝 1 次</button>
+      <button onclick="preset(60,3)">60% 卷衝 3 次</button>
+      <button onclick="preset(60,5)">60% 卷衝 5 次</button>
+      <button onclick="preset(100,7)">100% 卷全上</button>
+    </div>
+    <div class="grid2">
+      <div><label>卷軸成功率（%）</label>
+        <select id="rate"><option value="10">10%</option><option value="60" selected>60%</option><option value="100">100%</option><option value="30">30%（特殊）</option><option value="70">70%（特殊）</option></select></div>
+      <div><label>裝備可衝次數（卷軸格數）</label><input id="slots" type="number" value="7" min="1" max="15"></div>
+      <div><label>卷軸單價（楓幣）</label><input id="scrollPrice" type="number" value="500000" min="0"></div>
+      <div><label>白手裝備單價（楓幣）</label><input id="basePrice" type="number" value="300000" min="0"></div>
+      <div><label>目標成功次數</label><input id="target" type="number" value="3" min="1" max="15"></div>
+    </div>
+    <button class="go" onclick="calc()">計算</button>
+  </div>
+
+  <div class="result" id="res"></div>
+
+  <p class="note">計算模型：對一件裝備依序衝卷，格數用完仍未達標＝這件失敗、換下一件白手重衝。「期望總花費」＝平均需要的白手件數 × 白手價 ＋ 平均總卷數 × 卷價。機率為二項分佈精確計算，非模擬值。實際市價浮動，請以當下市場為準。</p>
+</div></main>
+<footer><div class="wrap"><p>twmaple.com — 非官方粉絲工具站，與 NEXON、遊戲橘子無任何關聯。</p></div></footer>
+<script>
+function preset(r,t){document.getElementById('rate').value=r;document.getElementById('target').value=t;calc();}
+function C(n,k){let r=1;for(let i=0;i<k;i++)r=r*(n-i)/(i+1);return r;}
+function fmt(x){return Math.round(x).toLocaleString('zh-TW');}
+function calc(){
+  const p=+document.getElementById('rate').value/100;
+  const n=+document.getElementById('slots').value;
+  const cs=+document.getElementById('scrollPrice').value;
+  const cb=+document.getElementById('basePrice').value;
+  const t=+document.getElementById('target').value;
+  const el=document.getElementById('res');
+  if(t>n){el.className='result show';el.innerHTML='<span class="bad">目標成功次數不能大於卷軸格數。</span>';return;}
+  // 單件成功機率：n 次中成功 >= t 次
+  let pSucc=0, dist=[];
+  for(let k=0;k<=n;k++){const pk=C(n,k)*Math.pow(p,k)*Math.pow(1-p,n-k);dist.push(pk);if(k>=t)pSucc+=pk;}
+  if(p>=1){pSucc=1;}
+  // 期望件數（幾何分佈）
+  const eItems=pSucc>0?1/pSucc:Infinity;
+  // 單件期望用卷數：達標即停（成功 t 次就停）或格滿
+  // 逐步模擬狀態機求精確期望卷數（衝到 t 成功或 n 次用完就停）
+  let eScrollsPerItem=0;
+  (function(){ // E[卷數] via DP over (attempt, successes)
+    let states={'0':1};let total=0; // successes -> prob, at attempt i
+    for(let i=0;i<n;i++){
+      const next={};
+      for(const s in states){
+        const sc=+s, pr=states[s];
+        if(sc>=t){continue;} // 已停
+        total+=pr; // 這次會再衝一張
+        const s1=sc+1;
+        next[s1]=(next[s1]||0)+pr*p;
+        next[sc]=(next[sc]||0)+pr*(1-p);
+      }
+      // 保留已達標的機率（停止）
+      for(const s in states){if(+s>=t)next[s]=(next[s]||0)+states[s];}
+      states=next;
+    }
+    eScrollsPerItem=total;
+  })();
+  const eCost=eItems===Infinity?Infinity:eItems*cb+eItems*eScrollsPerItem*cs;
+  let rows='';
+  for(let k=0;k<=n;k++){const pct=(dist[k]*100);rows+=`<tr><td>成功 ${k} 次</td><td>${pct<0.01&&pct>0?'<0.01':pct.toFixed(2)}%</td><td>${k>=t?'<span class="ok">達標</span>':'<span class="bad">未達標</span>'}</td></tr>`;}
+  el.className='result show';
+  el.innerHTML=`
+    <div>單件達標機率（≥${t} 成功）：<span class="big">${(pSucc*100).toFixed(2)}%</span></div>
+    <table>
+      <tr><th>指標</th><th>期望值</th><th></th></tr>
+      <tr><td>平均需要白手件數</td><td>${eItems===Infinity?'∞':eItems.toFixed(2)} 件</td><td></td></tr>
+      <tr><td>平均每件用卷數</td><td>${eScrollsPerItem.toFixed(2)} 張</td><td></td></tr>
+      <tr><td>平均總卷數</td><td>${eItems===Infinity?'∞':(eItems*eScrollsPerItem).toFixed(2)} 張</td><td></td></tr>
+      <tr><td><b>期望總花費</b></td><td colspan="2"><b class="ok">${eCost===Infinity?'∞':fmt(eCost)+' 楓幣'}</b></td></tr>
+    </table>
+    <table><tr><th>單件結果分佈（衝滿 ${n} 格）</th><th>機率</th><th>判定</th></tr>${rows}</table>`;
+}
+</script>
+</body>
+</html>
