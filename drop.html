@@ -41,7 +41,7 @@
 </div></header>
 <main><div class="wrap">
   <h1>🎁 怪物掉落查詢</h1>
-  <p class="sub">查怪物會掉什麼，或反查物品是哪些怪掉的。收錄台服經典版 323 隻怪物，等級以官方資料校正。</p>
+  <p class="sub">查怪物會掉什麼，或反查物品是哪些怪掉的。收錄台服經典版 332 隻怪物、7,257 筆官方掉落資料。</p>
 
   <div class="searchbar">
     <input id="q" type="search" placeholder="輸入怪物或物品名，例如：菇菇寶貝、綠水靈、攻擊卷軸…" autocomplete="off">
@@ -61,15 +61,15 @@
   <div class="legend" style="margin-top:6px">
     稀有度：<span class="lr lr0">常見</span><span class="lr lr1">普通</span><span class="lr lr2">稀有</span><span class="lr lr3">超稀有</span>
   </div>
-  <p class="note">資料基於海外舊版（pre-Big Bang）公開資料整理，物品與怪物名稱採台服繁體譯名；台服經典版實際掉落以實測為準，歡迎透過 <a href="https://www.threads.com/@toolsbyjarvis" target="_blank" rel="noopener">Threads @toolsbyjarvis</a> 回報修正。稀有度為參考分級（基於海外舊版資料），台服實際機率以官方與實測為準；不顯示精確機率數值。怪物範圍以台服經典版現有開放內容為準（等級與名稱依台服官方資料校正）。</p>
+  <p class="note">掉落資料依台服經典版官方資料整理（官方客戶端 1.14.5 圖鑑），怪物與物品名稱皆為台服官方繁體名稱。官方圖鑑不含掉落機率；稀有度色點為參考分級（基於海外舊版資料，僅供參考），無分級者不顯示色點。發現問題歡迎透過 <a href="https://www.threads.com/@toolsbyjarvis" target="_blank" rel="noopener">Threads @toolsbyjarvis</a> 回報。</p>
 </div></main>
-<footer><div class="wrap"><p>twmaple.com — 非官方粉絲工具站，與 NEXON、遊戲橘子無任何關聯。</p></div></footer>
+<footer><div class="wrap"><p>掉落資料依台服經典版官方資料整理。twmaple.com — 非官方粉絲工具站，與 NEXON、遊戲橘子無任何關聯。</p></div></footer>
 <script>
 let DATA=null, mode='mob', shown=0, curList=[];
 const $=id=>document.getElementById(id);
 const hitsEl=$('hits'), countEl=$('count'), moreBtn=$('more'), qEl=$('q');
 const CATN={equip:'裝備',scroll:'卷軸',use:'消耗',etc:'其他',other:'其他'};
-const RN=['常見','普通','稀有','超稀有'];
+const RN=['常見','普通','稀有','超稀有','未分級'];
 fetch('data/drops.json').then(r=>r.json()).then(d=>{
   d.mobs=d.mobs.filter(m=>m.in_classic!==false); // 只顯示台服經典版現有怪物
   DATA=d;
