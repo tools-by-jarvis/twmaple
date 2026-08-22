@@ -37,7 +37,7 @@
 <body>
 <header class="site"><div class="wrap">
   <div class="logo"><a href="index.html" style="color:var(--accent)">🍁 twmaple</a> <span>掉落查詢</span></div>
-  <nav class="top"><a href="scroll.html">卷軸計算</a><a href="exp.html">練等效率</a><a href="training.html">練功地圖</a></nav>
+  <nav class="top"><a href="scroll.html">卷軸計算</a><a href="exp.html">練等效率</a><a href="training.html">練功地圖</a><a href="boss.html">Boss時間表</a></nav>
 </div></header>
 <main><div class="wrap">
   <h1>🎁 怪物掉落查詢</h1>
@@ -117,6 +117,8 @@ function showMore(){
 }
 moreBtn.onclick=showMore;
 qEl.addEventListener('input',()=>render());
+const pq=new URLSearchParams(location.search).get('q');
+if(pq){mode='item';$('tabItem').classList.add('on');$('tabMob').classList.remove('on');qEl.value=pq;}
 $('tabMob').onclick=()=>{mode='mob';$('tabMob').classList.add('on');$('tabItem').classList.remove('on');render();};
 $('tabItem').onclick=()=>{mode='item';$('tabItem').classList.add('on');$('tabMob').classList.remove('on');render();};
 hitsEl.addEventListener('click',e=>{

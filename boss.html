@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>楓之谷經典版Boss時間表｜菁英怪重生時間與掉落</title>
+<meta name="description" content="楓之谷經典版（台服）8 大 Boss 菁英怪整理：巴洛古、殭屍猴王、蘑菇王、樹妖王等的等級、出沒地圖、重生時間與值得打的掉落物，附重生倒數計時器。">
+<link rel="canonical" href="https://twmaple.com/boss.html">
+<link rel="stylesheet" href="style.css">
+<style>
+.bosscard{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin-bottom:14px}
+.bosscard h3{color:var(--accent);font-size:1.1rem;margin-bottom:4px}
+.bosscard h3 .lv{color:var(--accent2);font-size:.85rem;font-weight:600;margin-left:6px}
+.meta{font-size:.9rem;color:var(--muted);margin:2px 0}
+.meta b{color:var(--text);font-weight:600}
+.drops{margin:8px 0 4px;display:flex;flex-wrap:wrap;gap:6px}
+.drops a{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:3px 8px;font-size:.85rem}
+.timer{margin-top:10px;padding-top:10px;border-top:1px dashed var(--border);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.timer button{background:var(--accent);color:#12151c;border:0;border-radius:8px;padding:8px 14px;font-size:.9rem;font-weight:700;cursor:pointer}
+.timer button.reset{background:var(--bg);color:var(--muted);border:1px solid var(--border);font-weight:400}
+.cd{font-size:1rem;font-weight:700;color:var(--accent2);font-variant-numeric:tabular-nums}
+.cd.up{color:var(--ok)}
+.tag{display:inline-block;font-size:.75rem;border-radius:5px;padding:1px 7px;margin-left:6px;vertical-align:middle}
+.tag.ok{background:#1f3b2a;color:var(--ok)}
+.tag.tbd{background:#3b2f1f;color:var(--accent)}
+.note{font-size:.82rem;color:var(--muted)}
+</style>
+</head>
+<body>
+<header class="site"><div class="wrap">
+  <div class="logo">🍁 twmaple <span>楓之谷經典版工具箱</span></div>
+  <nav class="top"><a href="scroll.html">卷軸計算</a><a href="exp.html">練等效率</a><a href="drop.html">掉落查詢</a><a href="training.html">練功地圖</a></nav>
+</div></header>
+<main><div class="wrap">
+  <h1>Boss／菁英怪時間表</h1>
+  <p class="sub">台服經典版（V001，維多利亞＋奇幻村＋螞蟻礦坑）目前已確認的 8 大 Boss。等級與掉落取自本站官方校正資料庫；重生時間台服官方未公布，標「參考」者為舊版社群整理值，其餘待實測，歡迎回報。</p>
+  <div id="list"></div>
+  <h2>怎麼用倒數計時器？</h2>
+  <p class="note">Boss 被擊殺當下按「剛被擊殺」，頁面會依參考重生時間倒數，時間到會顯示「可能已重生」。紀錄只存在你自己的瀏覽器（localStorage），關掉重開還在，不會上傳任何資料。重生時間標「待實測」的 Boss 尚無可靠數據，為避免誤導不提供倒數；若你實測到穩定的重生間隔，歡迎到巴哈經典版板分享，本站會定期更新。</p>
+  <p class="note" style="margin-top:8px">位置與名單來源：巴哈姆特經典版哈啦板社群整理（2026/08）。掉落點擊可跳轉<a href="drop.html">掉落查詢</a>看完整列表。</p>
+</div></main>
+<footer><div class="wrap">
+  <p>twmaple.com — 非官方粉絲工具站，與 NEXON、遊戲橘子無任何關聯。遊戲內數值以台服實測為準。</p>
+</div></footer>
+<script>
+const BOSSES=[
+ {id:2220000,n:'紅寶王',lv:20,map:'維多利亞港 海岸草叢3',rs:null,drops:['白魔者之袍','紅騎士甲','紅色法師帽']},
+ {id:3220000,n:'樹妖王（木妖王）',lv:35,map:'東方岩石山5',rs:null,drops:['單手劍攻擊卷軸60%','單手斧攻擊卷軸60%','黑女貴族服']},
+ {id:5220002,n:'殭屍猴王',lv:50,map:'巫婆森林1',rs:{min:180,label:'約 3 小時（他版參考，台服待實測）'},drops:['大魔法師短杖','九龍刀','天弓']},
+ {id:5220000,n:'巨居蟹',lv:55,map:'海龜沙灘',rs:null,drops:['紅鋼玉鎧甲','紫色皇家套裝','黃金柔絲手套']},
+ {id:6130101,n:'蘑菇王（菇菇王）',lv:60,map:'菇菇王出沒地',rs:{min:45,label:'約 45 分～1 小時（舊版整理參考，另有 3.5～4 小時說法，台服待實測）'},drops:['手套攻擊卷軸60%','鞋子跳躍卷軸60%','鋼鐵方盾']},
+ {id:6220000,n:'沼澤巨鱷',lv:65,map:'鱷魚潭1',rs:null,drops:['火焰刀','暴風錘','破天弩弓']},
+ {id:6300005,n:'殭屍蘑菇王（殭屍菇菇王）',lv:65,map:'螞蟻礦坑 隱藏地圖（蘑菇王之墓）',rs:{min:45,label:'約 45 分～1 小時（舊版整理參考，台服待實測）'},drops:['弓攻擊卷軸60%','槍攻擊卷軸60%','古老銀盾']},
+ {id:8130100,n:'巴洛古',lv:80,map:'被詛咒的寺院（奇幻村經螞蟻礦坑深處，冰毒眼獸洞穴2 右下隱藏入口進）',rs:null,drops:['霸王劍','金剛刃','赤神弓']}
+];
+const list=document.getElementById('list');
+function esc(s){return s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+list.innerHTML=BOSSES.map(b=>{
+  const rsTxt=b.rs?`<b>${esc(b.rs.label)}</b><span class="tag tbd">參考</span>`:`<b>待實測</b><span class="tag tbd">歡迎回報</span>`;
+  const timer=b.rs
+    ?`<div class="timer"><button data-kill="${b.id}">剛被擊殺</button><span class="cd" id="cd${b.id}">尚未記錄</span><button class="reset" data-reset="${b.id}">清除</button></div>`
+    :`<div class="timer"><span class="note">重生間隔未知，暫不提供倒數。實測到穩定間隔歡迎回報，會第一時間補上。</span></div>`;
+  return `<div class="bosscard"><h3>${esc(b.n)}<span class="lv">Lv.${b.lv}</span></h3>
+  <p class="meta">出沒地圖：<b>${esc(b.map)}</b></p>
+  <p class="meta">重生時間：${rsTxt}</p>
+  <div class="drops">值得打：${b.drops.map(d=>`<a href="drop.html?q=${encodeURIComponent(d)}">${esc(d)}</a>`).join('')}</div>
+  ${timer}</div>`;
+}).join('');
+function fmt(ms){const s=Math.max(0,Math.floor(ms/1000));const h=Math.floor(s/3600),m=Math.floor(s%3600/60),ss=s%60;return (h?h+':':'')+String(m).padStart(2,'0')+':'+String(ss).padStart(2,'0')}
+function tick(){
+  BOSSES.forEach(b=>{
+    if(!b.rs) return;
+    const el=document.getElementById('cd'+b.id); if(!el) return;
+    const t=localStorage.getItem('twm_boss_'+b.id);
+    if(!t){el.textContent='尚未記錄';el.classList.remove('up');return}
+    const eta=+t+b.rs.min*60000, left=eta-Date.now();
+    if(left>0){el.textContent='最快 '+fmt(left)+' 後重生';el.classList.remove('up')}
+    else{el.textContent='可能已重生！';el.classList.add('up')}
+  });
+}
+list.addEventListener('click',e=>{
+  const k=e.target.dataset.kill, r=e.target.dataset.reset;
+  if(k){localStorage.setItem('twm_boss_'+k,Date.now());tick()}
+  if(r){localStorage.removeItem('twm_boss_'+r);tick()}
+});
+setInterval(tick,1000);tick();
+</script>
+</body>
+</html>
